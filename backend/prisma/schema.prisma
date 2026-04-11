@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client" 
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       Int       @id @default(autoincrement()) 
+  username String    @unique
+  
+  // Back-relations
+  videos              Video[]  
+  comments            Comment[] // A user can write many comments
+  commentLikes        CommentLikes[]
+  commentDislikes     CommentDislikes[]
+  videoLikes          VideoLikes[]
+  videoDislikes       VideoDislikes[]
+}
+
+model Video {
+  id         Int       @id @default(autoincrement()) 
+  videoTitle String
+  videoUrl   String?
+  
+  creatorId  Int
+  creator    User      @relation(fields: [creatorId], references: [id])
+  
+  problemId  Int       @unique
+  codePane   CodePane  @relation(fields: [problemId], references: [id])
+
+  comments   Comment[] 
+  videoLikes  VideoLikes[]
+  videoDislikes  VideoDislikes[]
+}
+
+model CodePane {
+  id                 Int      @id @default(autoincrement())
+  problemTitle       String   
+  problemDescription String
+  testCases          Json     
+
+  video              Video?   
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now()) 
+
+  videoId   Int
+  video     Video    @relation(fields: [videoId], references: [id])
+
+  // The User who wrote this comment
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+
+  commentLikes CommentLikes[]
+  commentDislikes CommentDislikes[]
+}
+
+model VideoLikes {
+  videoId   Int
+  video     Video   @relation(fields: [videoId], references: [id])
+
+  userId    Int 
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@id([videoId, userId])
+}
+
+model VideoDislikes {
+  videoId   Int
+  video     Video   @relation(fields: [videoId], references: [id])
+
+  userId    Int 
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@id([videoId, userId])
+}
+
+model CommentLikes {
+  commentId   Int
+  comment   Comment   @relation(fields: [commentId], references: [id])
+
+  userId    Int 
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@id([commentId, userId])
+}
+
+model CommentDislikes {
+  commentId   Int
+  comment   Comment   @relation(fields: [commentId], references: [id])
+
+  userId    Int 
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@id([commentId, userId])
+}
