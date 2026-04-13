@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client" 
-  output   = "../src/generated/prisma"
+  provider = "prisma-client"
+  output   = "../generated/prisma" 
 }
 
 datasource db {
@@ -10,6 +10,8 @@ datasource db {
 model User {
   id       Int       @id @default(autoincrement()) 
   username String    @unique
+  email    String    @unique
+  clerkId  String    @unique
   
   // Back-relations
   videos              Video[]  
@@ -18,22 +20,25 @@ model User {
   commentDislikes     CommentDislikes[]
   videoLikes          VideoLikes[]
   videoDislikes       VideoDislikes[]
+  followers           Subscription[]      @relation("Followers")
+  following           Subscription[]      @relation("Following")
 }
 
 model Video {
-  id         Int       @id @default(autoincrement()) 
-  videoTitle String
-  videoUrl   String?
-  
-  creatorId  Int
-  creator    User      @relation(fields: [creatorId], references: [id])
-  
-  problemId  Int       @unique
-  codePane   CodePane  @relation(fields: [problemId], references: [id])
+  id              Int       @id @default(autoincrement()) 
+  videoTitle      String
+  videoUrl        String?
+  createdAt       DateTime  @default(now()) 
 
-  comments   Comment[] 
-  videoLikes  VideoLikes[]
-  videoDislikes  VideoDislikes[]
+  creatorId       Int
+  creator         User      @relation(fields: [creatorId], references: [id])
+  
+  problemId       Int       @unique
+  codePane        CodePane  @relation(fields: [problemId], references: [id])
+
+  comments        Comment[] 
+  videoLikes      VideoLikes[]
+  videoDislikes   VideoDislikes[]
 }
 
 model CodePane {
@@ -99,4 +104,19 @@ model CommentDislikes {
   user      User    @relation(fields: [userId], references: [id])
 
   @@id([commentId, userId])
+}
+
+model Subscription {
+  // The person who is doing the subscribing (The Viewer)
+  subscriberId Int
+  subscriber   User @relation("Following", fields: [subscriberId], references: [id])
+
+  // The person who is being subscribed to (The Creator)
+  creatorId    Int
+  creator      User @relation("Followers", fields: [creatorId], references: [id])
+
+  createdAt    DateTime @default(now())
+
+  // A user can only subscribe to a specific creator once
+  @@id([subscriberId, creatorId])
 }
