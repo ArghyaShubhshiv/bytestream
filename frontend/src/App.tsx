@@ -1,13 +1,14 @@
+import { RouterProvider, createRouter, createRootRoute, createRoute } from '@tanstack/react-router'
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import VideoDisplay, { type Video } from "./components/VideoDisplay";
 import CodePane from "./components/CodePane";
+import LandingPage from "./pages/LandingPage";
 
-function App() {
+// Video Page Component
+function VideoPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // 💥 NEW: State to track which video the user is currently watching
   const [activeVideo, setActiveVideo] = useState<Video | null>(null);
 
   useEffect(() => {
@@ -16,7 +17,6 @@ function App() {
         const response = await api.get("/videos/feed");
         if (Array.isArray(response.data)) {
           setVideos(response.data);
-          // Set the very first video as active immediately on load
           if (response.data.length > 0) setActiveVideo(response.data[0]);
         } else {
           setVideos([]);
@@ -35,20 +35,16 @@ function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden font-sans bg-neutral-950">
-      
       <div className="w-[40%] h-full border-r border-neutral-800 bg-black">
-        {/* Pass the videos AND the callback function */}
-        <VideoDisplay 
-          videos={videos} 
-          onVideoChange={(video) => setActiveVideo(video)} 
+        <VideoDisplay
+          videos={videos}
+          onVideoChange={(video) => setActiveVideo(video)}
         />
       </div>
-
       <div className="w-[60%] h-full shadow-2xl z-20">
-        {/* 💥 Dynamically pass the active video's data to the CodePane! */}
         {activeVideo && activeVideo.codePane ? (
-          <CodePane 
-            problemTitle={activeVideo.codePane.problemTitle} 
+          <CodePane
+            problemTitle={activeVideo.codePane.problemTitle}
             problemDescription={activeVideo.codePane.problemDescription}
           />
         ) : (
@@ -57,9 +53,37 @@ function App() {
           </div>
         )}
       </div>
-
     </div>
   );
+}
+
+// Router setup
+const rootRoute = createRootRoute()
+
+const landingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: LandingPage,
+})
+
+const videoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/feed',
+  component: VideoPage,
+})
+
+const routeTree = rootRoute.addChildren([landingRoute, videoRoute])
+
+const router = createRouter({ routeTree })
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}
+
+function App() {
+  return <RouterProvider router={router} />
 }
 
 export default App;
