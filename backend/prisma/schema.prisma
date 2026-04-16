@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement()) 
-  username String    @unique
-  email    String    @unique
-  clerkId  String    @unique
+  id              Int       @id @default(autoincrement()) 
+  username        String    @unique
+  passwordHash    String 
+  email           String    @unique
+  createdAt       DateTime  @default(now())
   
   // Back-relations
   videos              Video[]  
