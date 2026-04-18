@@ -14,7 +14,7 @@ ByteStream is a full-stack, LeetCode-meets-TikTok hybrid platform where users ca
 ## 🚦 Prerequisites
 
 Before you begin, ensure you have the following installed on your machine:
-* [Node.js](https://nodejs.org/) (v18 or higher)
+* [Node.js](https://nodejs.org/) (v20 or higher)
 * [Git](https://git-scm.com/)
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Must be installed and running before starting the backend)
 
@@ -44,9 +44,18 @@ npm install
 ```
 
 **Set up your Environment Variables:**
-Create a new file named `.env` inside the `backend` folder and add the following line exactly as written. This connects Prisma to our local Docker database:
+Create a new file named `.env` inside the `backend` folder and add the following values:
 ```text
-DATABASE_URL=<insert database url>
+DATABASE_URL=postgresql://admin:password123@localhost:5433/bytestream?schema=public
+
+# Auth
+JWT_SECRET=<your_jwt_secret>
+
+# AWS S3 upload config
+AWS_REGION=<your_aws_region>
+AWS_ACCESS_KEY_ID=<your_access_key_id>
+AWS_SECRET_ACCESS_KEY=<your_secret_access_key>
+AWS_BUCKET_NAME=<your_bucket_name>
 ```
 
 **Start the Database & Run Migrations:**
@@ -57,6 +66,9 @@ docker compose up -d
 
 # Sync the database schema and generate the Prisma v7 Client
 npx prisma migrate dev
+
+# (Optional but recommended) Explicitly generate Prisma Client
+npx prisma generate
 ```
 
 **Start the Backend Server:**
@@ -104,4 +116,3 @@ To keep our database schemas from colliding, please adhere to the following work
 2. **Schema Changes:** If you modify the `backend/prisma/schema.prisma` file, you **must** run `npx prisma migrate dev --name describe_your_change`. 
 3. **Commit the Migration:** Be sure to commit the newly generated folder inside `prisma/migrations` to GitHub so the rest of the team can sync their databases when they pull your code.
 4. **GitHub Authentication:** Remember that pushing via the terminal requires a GitHub Personal Access Token (PAT), not your standard account password.
-```
