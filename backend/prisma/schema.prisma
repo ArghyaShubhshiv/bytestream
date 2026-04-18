@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  email        String   @unique
+  createdAt    DateTime @default(now())
+
+  videos          Video[]
+  comments        Comment[]
+  commentLikes    CommentLikes[]
+  commentDislikes CommentDislikes[]
+  videoLikes      VideoLikes[]
+  videoDislikes   VideoDislikes[]
+  followers       Subscription[] @relation("Followers")
+  following       Subscription[] @relation("Following")
+  submissions     Submission[]
+}
+
+model Video {
+  id         Int      @id @default(autoincrement())
+  videoTitle String
+  videoUrl   String?
+  createdAt  DateTime @default(now())
+
+  creatorId Int
+  creator   User @relation(fields: [creatorId], references: [id])
+
+  problemId Int      @unique
+  codePane  CodePane @relation(fields: [problemId], references: [id])
+
+  comments      Comment[]
+  videoLikes    VideoLikes[]
+  videoDislikes VideoDislikes[]
+}
+
+model CodePane {
+  id                 Int     @id @default(autoincrement())
+  problemTitle       String
+  problemDescription String
+  testCases          Json
+
+  video       Video?
+  submissions Submission[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+
+  videoId Int
+  video   Video @relation(fields: [videoId], references: [id])
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  commentLikes    CommentLikes[]
+  commentDislikes CommentDislikes[]
+}
+
+model VideoLikes {
+  videoId Int
+  video   Video @relation(fields: [videoId], references: [id])
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  @@id([videoId, userId])
+}
+
+model VideoDislikes {
+  videoId Int
+  video   Video @relation(fields: [videoId], references: [id])
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  @@id([videoId, userId])
+}
+
+model CommentLikes {
+  commentId Int
+  comment   Comment @relation(fields: [commentId], references: [id])
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  @@id([commentId, userId])
+}
+
+model CommentDislikes {
+  commentId Int
+  comment   Comment @relation(fields: [commentId], references: [id])
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  @@id([commentId, userId])
+}
+
+model Subscription {
+  subscriberId Int
+  subscriber   User @relation("Following", fields: [subscriberId], references: [id])
+
+  creatorId Int
+  creator   User @relation("Followers", fields: [creatorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@id([subscriberId, creatorId])
+}
+
+
+
+model Submission {
+  id              Int      @id @default(autoincrement())
+  userId          Int?
+  user            User?    @relation(fields: [userId], references: [id])
+  codePaneId      Int
+  codePane        CodePane @relation(fields: [codePaneId], references: [id])
+  language        String
+  code            String
+  status          String
+  passedCount     Int      @default(0)
+  totalCount      Int      @default(0)
+  executionTimeMs Int?
+  error           String?
+  createdAt       DateTime @default(now())
+}
