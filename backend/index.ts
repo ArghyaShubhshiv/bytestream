@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import videoRoutes from "./routes/video.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import interactionRoutes from "./routes/interaction.routes.js";
+import watchLaterRoutes from "./routes/watchlater.routes.js";
 import submissionRoutes from "./routes/submission.routes.js";
 import { checkPistonHealth } from "./modules/judge/health.check.js";
 
@@ -48,6 +49,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/interactions", interactionRoutes);
+app.use("/api/watchlater", watchLaterRoutes);
 app.use("/api", submissionRoutes); // covers /api/run, /api/submit, /api/submissions, /api/languages
 
 // ── Global error handler ────────────────────────────────────────────────────

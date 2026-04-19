@@ -6,6 +6,7 @@ interface CodePaneProps {
   problemTitle: string
   problemDescription: string
   videoId: number
+  testCaseCount?: number
 }
 
 type Language = 'javascript' | 'python' | 'java' | 'cpp'
@@ -106,7 +107,7 @@ const STATUS_ICON: Record<string, string> = {
   'Error':               '!',
 }
 
-export default function CodePane({ problemTitle, problemDescription, videoId }: CodePaneProps) {
+export default function CodePane({ problemTitle, problemDescription, videoId, testCaseCount = 0 }: CodePaneProps) {
   const [language, setLanguage]     = useState<Language>('python')
   const [code, setCode]             = useState<string>(DEFAULT_CODE.python)
   const [result, setResult]         = useState<SubmissionResult | null>(null)
@@ -237,6 +238,11 @@ export default function CodePane({ problemTitle, problemDescription, videoId }: 
           </span>
         )}
       </div>
+      {testCaseCount === 0 && (
+        <div className="px-4 py-3 border-b border-[#333] bg-[#1e1e1e] text-sm text-yellow-200">
+          This problem does not have test cases yet. Running or submitting code may fail until the creator adds test cases.
+        </div>
+      )}
 
       {/* Monaco Editor */}
       <div className="grow pt-2">
@@ -310,14 +316,14 @@ export default function CodePane({ problemTitle, problemDescription, videoId }: 
       <div className="p-4 border-t border-[#333] flex justify-end gap-3 bg-[#252526] shrink-0">
         <button
           onClick={() => execute('run')}
-          disabled={isLoading}
+          disabled={isLoading || testCaseCount === 0}
           className="px-5 py-2 bg-[#2d2d2d] hover:bg-[#3e3e3e] border border-[#555] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white font-medium rounded cursor-pointer text-sm"
         >
           {running ? 'Running…' : 'Run'}
         </button>
         <button
           onClick={() => execute('submit')}
-          disabled={isLoading}
+          disabled={isLoading || testCaseCount === 0}
           className="px-6 py-2 bg-[#2ea043] hover:bg-[#2c974b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white font-bold rounded cursor-pointer text-sm"
         >
           {submitting ? 'Submitting…' : 'Submit'}

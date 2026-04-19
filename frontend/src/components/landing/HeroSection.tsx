@@ -1,9 +1,10 @@
 import { Play, Code2, Zap } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import videoPreview from '../../assets/video-preview.jpg'
-import idePreview from '../../assets/ide-preview.jpg'
+import { useAuth } from '../../App'
 
 export default function HeroSection() {
+  const { user } = useAuth()
+
   return (
     <section className="relative min-h-screen overflow-hidden pt-24">
       {/* Background glow */}
@@ -32,11 +33,11 @@ export default function HeroSection() {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
-              to="/feed"
+              to={user ? '/feed' : '/auth'}
               className="group inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 glow-ember"
             >
               <Play className="h-4 w-4 transition-transform group-hover:scale-110" />
-              Start Learning Free
+              {user ? 'Start Learning Free' : 'Sign in to get started'}
             </Link>
             <a
               href="#topics"
@@ -55,12 +56,10 @@ export default function HeroSection() {
               <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
               Video Tutorial
             </div>
-            <img
-              src={videoPreview}
-              alt="ByteStream video tutorial preview"
-              className="w-full rounded-xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              width={600}
-              height={400}
+            <img 
+              src="/src/assets/video-preview.jpg" 
+              alt="Video Tutorial Preview"
+              className="h-80 w-full rounded-3xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
             />
           </div>
 
@@ -69,12 +68,10 @@ export default function HeroSection() {
               <Code2 className="h-3 w-3 text-primary" />
               Live IDE
             </div>
-            <img
-              src={idePreview}
-              alt="ByteStream integrated code editor"
-              className="w-full rounded-xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              width={600}
-              height={400}
+            <img 
+              src="/src/assets/ide-preview.jpg" 
+              alt="IDE Workspace Preview"
+              className="h-80 w-full rounded-3xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
             />
           </div>
         </div>
