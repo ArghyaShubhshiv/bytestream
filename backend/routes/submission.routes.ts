@@ -5,6 +5,7 @@ import { resolveDbUser, optionalAuth } from "../middleware/auth.middleware.js";
 const router = Router();
 
 // Code execution — no auth required to run/submit, but attach userId if token present
+router.post("/execute", optionalAuth, run);
 router.post("/run",    optionalAuth, run);
 router.post("/submit", optionalAuth, submit);
 

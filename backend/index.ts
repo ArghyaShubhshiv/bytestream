@@ -37,6 +37,7 @@ const submitLimiter = rateLimit({
 });
 
 app.use("/api/run",    runLimiter);
+app.use("/api/execute", runLimiter);
 app.use("/api/submit", submitLimiter);
 
 // Health check

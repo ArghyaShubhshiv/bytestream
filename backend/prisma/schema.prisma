@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -24,6 +23,7 @@ model User {
   followers       Subscription[] @relation("Followers")
   following       Subscription[] @relation("Following")
   submissions     Submission[]
+  watchLater      WatchLater[]
 }
 
 model Video {
@@ -41,6 +41,7 @@ model Video {
   comments      Comment[]
   videoLikes    VideoLikes[]
   videoDislikes VideoDislikes[]
+  watchLater    WatchLater[]
 }
 
 model CodePane {

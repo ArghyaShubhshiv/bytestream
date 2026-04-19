@@ -3,6 +3,12 @@ export interface Video {
   videoTitle: string
   videoUrl: string | null
   creator: { username: string }
+  likeCount?: number
+  dislikeCount?: number
+  _count?: {
+    videoLikes?: number
+    videoDislikes?: number
+  }
   codePane: {
     problemTitle: string
     problemDescription: string
@@ -40,7 +46,7 @@ export default function VideoDisplay({ videos, selectedVideoId, onVideoChange }:
                 : 'border-border bg-secondary/30 hover:border-primary hover:bg-secondary/60'
             }`}
           >
-            <div className="relative h-40 bg-slate-950 overflow-hidden">
+            <div className="relative aspect-[9/16] max-h-[420px] bg-slate-950 overflow-hidden">
               {video.videoUrl ? (
                 <video
                   src={video.videoUrl}

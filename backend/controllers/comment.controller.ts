@@ -17,11 +17,11 @@ export const getComments = async (req: AuthenticatedRequest, res: Response) => {
       return res.json(comments);
     }
 
-    const liked = await prisma.commentLike.findMany({
+    const liked = await prisma.commentLikes.findMany({
       where: { userId, commentId: { in: comments.map((comment: any) => comment.id) } },
       select: { commentId: true },
     });
-    const disliked = await prisma.commentDislike.findMany({
+    const disliked = await prisma.commentDislikes.findMany({
       where: { userId, commentId: { in: comments.map((comment: any) => comment.id) } },
       select: { commentId: true },
     });

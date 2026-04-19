@@ -1,9 +1,36 @@
 import { Request, Response } from "express";
 import { randomUUID } from "node:crypto";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { prisma } from "../lib/prisma.js";
 import { s3Client } from "../lib/s3Client.js";
+
+const getObjectKeyFromUrl = (value: string): string | null => {
+  try {
+    const parsed = new URL(value);
+    return parsed.pathname.replace(/^\//, "") || null;
+  } catch {
+    return null;
+  }
+};
+
+const getPlayableVideoUrl = async (videoUrl: string | null): Promise<string | null> => {
+  if (!videoUrl) return null;
+
+  const bucketName = process.env.AWS_BUCKET_NAME;
+  if (!bucketName) return videoUrl;
+
+  const key = getObjectKeyFromUrl(videoUrl);
+  if (!key) return videoUrl;
+
+  try {
+    const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
+    return await getSignedUrl(s3Client, command, { expiresIn: 60 * 60 });
+  } catch (error) {
+    console.error("Failed to generate playback URL:", error);
+    return videoUrl;
+  }
+};
 
 export const getVideoFeed = async (_req: Request, res: Response) => {
   try {
@@ -13,9 +40,20 @@ export const getVideoFeed = async (_req: Request, res: Response) => {
       include: {
         creator: { select: { username: true } },
         codePane: true,
+        _count: { select: { videoLikes: true, videoDislikes: true } },
       },
     });
-    res.json(videos);
+
+    const playableVideos = await Promise.all(
+      videos.map(async (video) => ({
+        ...video,
+        likeCount: video._count.videoLikes,
+        dislikeCount: video._count.videoDislikes,
+        videoUrl: await getPlayableVideoUrl(video.videoUrl),
+      })),
+    );
+
+    res.json(playableVideos);
   } catch (err) {
     console.error("Error fetching video feed:", err);
     res.status(500).json({ error: "Failed to fetch video feed" });
@@ -38,10 +76,20 @@ export const searchVideos = async (req: Request, res: Response) => {
       include: {
         creator: { select: { username: true } },
         codePane: true,
+        _count: { select: { videoLikes: true, videoDislikes: true } },
       },
     });
 
-    res.json(videos);
+    const playableVideos = await Promise.all(
+      videos.map(async (video) => ({
+        ...video,
+        likeCount: video._count.videoLikes,
+        dislikeCount: video._count.videoDislikes,
+        videoUrl: await getPlayableVideoUrl(video.videoUrl),
+      })),
+    );
+
+    res.json(playableVideos);
   } catch (err) {
     console.error("Error searching videos:", err);
     res.status(500).json({ error: "Failed to search videos" });
@@ -117,7 +165,9 @@ export const confirmUpload = async (req: Request, res: Response) => {
       data: {
         videoTitle: title,
         videoUrl,
-        creatorId: parsedAuthorId,
+        creator: {
+          connect: { id: parsedAuthorId },
+        },
         codePane: {
           create: {
             problemTitle: title,
@@ -151,6 +201,7 @@ export const getVideoById = async (req: Request, res: Response) => {
       include: {
         creator: { select: { username: true } },
         codePane: true,
+        _count: { select: { videoLikes: true, videoDislikes: true } },
       },
     })
 
@@ -158,7 +209,12 @@ export const getVideoById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Video not found." })
     }
 
-    return res.json(video)
+    return res.json({
+      ...video,
+      likeCount: video._count.videoLikes,
+      dislikeCount: video._count.videoDislikes,
+      videoUrl: await getPlayableVideoUrl(video.videoUrl),
+    })
   } catch (err) {
     console.error("Error fetching video by ID:", err)
     return res.status(500).json({ error: "Failed to fetch video details" })

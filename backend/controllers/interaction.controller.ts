@@ -15,11 +15,19 @@ export const toggleVideoLike = async (req: AuthenticatedRequest, res: Response) 
       await prisma.videoLikes.delete({
         where: { videoId_userId: { videoId, userId } },
       });
-      return res.json({ liked: false });
+      const [likes, dislikes] = await Promise.all([
+        prisma.videoLikes.count({ where: { videoId } }),
+        prisma.videoDislikes.count({ where: { videoId } }),
+      ]);
+      return res.json({ liked: false, dislikeRemoved: false, likes, dislikes });
     } else {
-      await prisma.videoDislikes.deleteMany({ where: { videoId, userId } });
+      const dislikeRemoval = await prisma.videoDislikes.deleteMany({ where: { videoId, userId } });
       await prisma.videoLikes.create({ data: { videoId, userId } });
-      return res.json({ liked: true });
+      const [likes, dislikes] = await Promise.all([
+        prisma.videoLikes.count({ where: { videoId } }),
+        prisma.videoDislikes.count({ where: { videoId } }),
+      ]);
+      return res.json({ liked: true, dislikeRemoved: dislikeRemoval.count > 0, likes, dislikes });
     }
   } catch (error) {
     console.error("Video Like Error:", error);
@@ -40,11 +48,19 @@ export const toggleVideoDislike = async (req: AuthenticatedRequest, res: Respons
       await prisma.videoDislikes.delete({
         where: { videoId_userId: { videoId, userId } },
       });
-      return res.json({ disliked: false });
+      const [likes, dislikes] = await Promise.all([
+        prisma.videoLikes.count({ where: { videoId } }),
+        prisma.videoDislikes.count({ where: { videoId } }),
+      ]);
+      return res.json({ disliked: false, likeRemoved: false, likes, dislikes });
     } else {
-      await prisma.videoLikes.deleteMany({ where: { videoId, userId } });
+      const likeRemoval = await prisma.videoLikes.deleteMany({ where: { videoId, userId } });
       await prisma.videoDislikes.create({ data: { videoId, userId } });
-      return res.json({ disliked: true });
+      const [likes, dislikes] = await Promise.all([
+        prisma.videoLikes.count({ where: { videoId } }),
+        prisma.videoDislikes.count({ where: { videoId } }),
+      ]);
+      return res.json({ disliked: true, likeRemoved: likeRemoval.count > 0, likes, dislikes });
     }
   } catch (error) {
     console.error("Video Dislike Error:", error);

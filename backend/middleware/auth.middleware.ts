@@ -1,9 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is required but not set. Set it in backend/.env before starting.");
+const isProduction = process.env.NODE_ENV === "production";
+const JWT_SECRET = process.env.JWT_SECRET ?? "dev_only_jwt_secret_change_me";
+
+if (isProduction && !process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required in production.");
+}
+
+if (!isProduction && !process.env.JWT_SECRET) {
+  console.warn("[auth] JWT_SECRET is not set. Using a development fallback secret.");
 }
 
 export interface AuthenticatedRequest extends Request {
