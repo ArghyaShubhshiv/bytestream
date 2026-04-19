@@ -95,26 +95,43 @@ async function _judge(req: Request, res: Response, sampleOnly: boolean) {
 // GET /api/submissions?videoId=X — submission history for the active user
 export async function getSubmissions(req: Request, res: Response) {
   const userId = (req as AuthenticatedRequest).internalUserId;
-  const videoId = Number(req.query.videoId);
-  if (isNaN(videoId)) return res.status(400).json({ error: "videoId query param required." });
+  const videoId = req.query.videoId ? Number(req.query.videoId) : undefined
 
-  const video = await prisma.video.findUnique({
-    where: { id: videoId },
-    select: { codePaneId: true },
-  });
-  if (!video) return res.status(404).json({ error: "Video not found." });
+  if (videoId !== undefined && Number.isNaN(videoId)) {
+    return res.status(400).json({ error: "videoId must be a valid number." });
+  }
 
-  const submissions = await prisma.submission.findMany({
-    where: { codePaneId: video.codePaneId, userId: userId ?? undefined },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-    select: {
-      id: true, status: true, language: true,
-      passedCount: true, totalCount: true,
-      executionTimeMs: true, createdAt: true,
-      // Don't return full code in the list — too heavy
-    },
-  });
+  let submissions
+  if (videoId === undefined) {
+    submissions = await prisma.submission.findMany({
+      where: { userId: userId ?? undefined },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        id: true, status: true, language: true,
+        passedCount: true, totalCount: true,
+        executionTimeMs: true, createdAt: true,
+      },
+    })
+  } else {
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      select: { codePaneId: true },
+    })
+    if (!video) return res.status(404).json({ error: "Video not found." });
+
+    submissions = await prisma.submission.findMany({
+      where: { codePaneId: video.codePaneId, userId: userId ?? undefined },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        id: true, status: true, language: true,
+        passedCount: true, totalCount: true,
+        executionTimeMs: true, createdAt: true,
+      },
+    })
+  }
+
   return res.json(submissions);
 }
 

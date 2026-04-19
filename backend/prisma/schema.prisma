@@ -120,7 +120,16 @@ model Subscription {
   @@id([subscriberId, creatorId])
 }
 
+model WatchLater {
+  id      Int   @id @default(autoincrement())
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id])
+  videoId Int
+  video   Video @relation(fields: [videoId], references: [id])
+  addedAt DateTime @default(now())
 
+  @@unique([userId, videoId])
+}
 
 model Submission {
   id              Int      @id @default(autoincrement())

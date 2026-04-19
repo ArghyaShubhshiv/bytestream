@@ -6,7 +6,7 @@ import {
   toggleCommentDislike,
 } from "../controllers/interaction.controller.js";
 import { getComments, addComment } from "../controllers/comment.controller.js";
-import { resolveDbUser } from "../middleware/auth.middleware.js";
+import { optionalAuth, resolveDbUser } from "../middleware/auth.middleware.js";
 import { toggleSubscribe } from "../controllers/subscription.controllers.js";
 
 const router = Router();
@@ -20,7 +20,7 @@ router.post("/comment/:commentId/like", resolveDbUser, toggleCommentLike);
 router.post("/comment/:commentId/dislike", resolveDbUser, toggleCommentDislike);
 
 // Comments (read = public, write = auth)
-router.get("/videos/:videoId", getComments);
+router.get("/videos/:videoId", optionalAuth, getComments);
 router.post("/videos/:videoId", resolveDbUser, addComment);
 
 // Subscriptions (auth required)
