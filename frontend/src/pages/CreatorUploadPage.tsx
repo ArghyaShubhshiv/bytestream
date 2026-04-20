@@ -6,7 +6,7 @@ import { api } from '../../lib/api'
 
 interface TestCase {
   input: string
-  expectedOutput: string
+  output: string
 }
 
 export default function CreatorUploadPage() {
@@ -18,7 +18,7 @@ export default function CreatorUploadPage() {
   const [problemTitle, setProblemTitle] = useState('')
   const [problemDescription, setProblemDescription] = useState('')
   const [testCases, setTestCases] = useState<TestCase[]>([
-    { input: '', expectedOutput: '' },
+    { input: '', output: '' },
   ])
   const [videoFile, setVideoFile] = useState<File | null>(null)
 
@@ -39,7 +39,7 @@ export default function CreatorUploadPage() {
   }
 
   // Handle test case changes
-  const updateTestCase = (index: number, field: 'input' | 'expectedOutput', value: string) => {
+  const updateTestCase = (index: number, field: 'input' | 'output', value: string) => {
     const updated = [...testCases]
     updated[index][field] = value
     setTestCases(updated)
@@ -47,7 +47,7 @@ export default function CreatorUploadPage() {
 
   // Add new test case
   const addTestCase = () => {
-    setTestCases([...testCases, { input: '', expectedOutput: '' }])
+    setTestCases([...testCases, { input: '', output: '' }])
   }
 
   // Remove test case
@@ -90,7 +90,7 @@ export default function CreatorUploadPage() {
       setError('Please select a video file')
       return
     }
-    if (testCases.some((tc) => !tc.input.trim() || !tc.expectedOutput.trim())) {
+    if (testCases.some((tc) => !tc.input.trim() || !tc.output.trim())) {
       setError('All test cases must have input and expected output')
       return
     }
@@ -127,6 +127,7 @@ export default function CreatorUploadPage() {
       // Step 3: Confirm upload and save metadata in database
       await api.post('/videos/confirm', {
         title: videoTitle.trim(),
+        problemTitle: problemTitle.trim(),
         description: problemDescription.trim(),
         authorId: user.id,
         fileKey: key,
@@ -338,8 +339,8 @@ export default function CreatorUploadPage() {
                     Expected Output
                   </label>
                   <textarea
-                    value={testCase.expectedOutput}
-                    onChange={(e) => updateTestCase(index, 'expectedOutput', e.target.value)}
+                    value={testCase.output}
+                    onChange={(e) => updateTestCase(index, 'output', e.target.value)}
                     placeholder="1 2 3 5 8 9"
                     rows={3}
                     className="w-full rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono"

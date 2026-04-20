@@ -15,7 +15,12 @@ export const getUserData = async (_req: AuthenticatedRequest, res: Response) => 
 };
 
 export const getUserProfile = async (req: AuthenticatedRequest, res: Response) => {
-  const username = req.params.username;
+  const rawUsername = req.params.username;
+  const username = Array.isArray(rawUsername) ? rawUsername[0] : rawUsername;
+
+  if (!username) {
+    return res.status(400).json({ error: "username is required" });
+  }
 
   try {
     const user = await prisma.user.findUnique({

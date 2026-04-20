@@ -11,7 +11,7 @@ interface Video {
   codePane: {
     problemTitle: string
     problemDescription: string
-    testCases?: Array<{ input: string; expectedOutput: string }>
+    testCases?: Array<{ input: string; output?: string; expectedOutput?: string }>
   }
 }
 
@@ -135,6 +135,7 @@ export default function VideoDetailPage() {
               problemTitle={video.codePane.problemTitle}
               problemDescription={video.codePane.problemDescription}
               videoId={video.id}
+              testCaseCount={Array.isArray(video.codePane.testCases) ? video.codePane.testCases.length : 0}
             />
           </div>
         </div>

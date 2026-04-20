@@ -5,6 +5,38 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { prisma } from "../lib/prisma.js";
 import { s3Client } from "../lib/s3Client.js";
 
+interface RawTestCase {
+  input?: unknown;
+  output?: unknown;
+  expectedOutput?: unknown;
+  isHidden?: unknown;
+}
+
+const normalizeTestCases = (testCases: unknown): Array<{ input: string; output: string; isHidden: boolean }> => {
+  if (!Array.isArray(testCases)) return [];
+
+  return testCases
+    .map((tc) => {
+      const item = tc as RawTestCase;
+      const input = typeof item.input === "string" ? item.input.trim() : "";
+      const outputValue = typeof item.output === "string"
+        ? item.output
+        : typeof item.expectedOutput === "string"
+        ? item.expectedOutput
+        : "";
+      const output = outputValue.trim();
+
+      if (!input || !output) return null;
+
+      return {
+        input,
+        output,
+        isHidden: Boolean(item.isHidden),
+      };
+    })
+    .filter((tc): tc is { input: string; output: string; isHidden: boolean } => tc !== null);
+};
+
 const getObjectKeyFromUrl = (value: string): string | null => {
   try {
     const parsed = new URL(value);
@@ -133,12 +165,13 @@ export const getUploadUrl = async (req: Request, res: Response) => {
 };
 
 export const confirmUpload = async (req: Request, res: Response) => {
-  const { title, description, authorId, fileKey, testCases } = req.body as {
+  const { title, problemTitle, description, authorId, fileKey, testCases } = req.body as {
     title?: string;
+    problemTitle?: string;
     description?: string;
     authorId?: number | string;
     fileKey?: string;
-    testCases?: Array<{ input: string; expectedOutput: string }>;
+    testCases?: unknown;
   };
 
   const bucketName = process.env.AWS_BUCKET_NAME;
@@ -159,6 +192,15 @@ export const confirmUpload = async (req: Request, res: Response) => {
   }
 
   const videoUrl = `https://${bucketName}.s3.amazonaws.com/${fileKey}`;
+  const normalizedProblemTitle = (problemTitle ?? title).trim();
+  const normalizedTestCases = normalizeTestCases(testCases);
+
+  if (!normalizedProblemTitle) {
+    return res.status(400).json({ error: "problemTitle is required" });
+  }
+  if (normalizedTestCases.length === 0) {
+    return res.status(400).json({ error: "At least one valid test case is required" });
+  }
 
   try {
     const createdVideo = await prisma.video.create({
@@ -170,9 +212,9 @@ export const confirmUpload = async (req: Request, res: Response) => {
         },
         codePane: {
           create: {
-            problemTitle: title,
+            problemTitle: normalizedProblemTitle,
             problemDescription: description,
-            testCases: Array.isArray(testCases) ? testCases : [],
+            testCases: normalizedTestCases,
           },
         },
       },

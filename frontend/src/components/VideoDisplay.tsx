@@ -12,7 +12,7 @@ export interface Video {
   codePane: {
     problemTitle: string
     problemDescription: string
-    testCases?: Array<{ input: string; expectedOutput: string }>
+    testCases?: Array<{ input: string; output?: string; expectedOutput?: string }>
   }
 }
 

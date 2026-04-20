@@ -7,6 +7,36 @@ import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 // Per-session in-flight lock: prevents parallel submissions for the same video
 const inFlight = new Set<string>();
 
+const normalizeJudgeTestCases = (raw: unknown): TestCase[] => {
+  if (!Array.isArray(raw)) return [];
+
+  return raw.flatMap((entry) => {
+      const tc = entry as {
+        input?: unknown;
+        output?: unknown;
+        expectedOutput?: unknown;
+        isHidden?: unknown;
+      };
+
+      const input = typeof tc.input === "string" ? tc.input.trim() : "";
+      const outputCandidate =
+        typeof tc.output === "string"
+          ? tc.output
+          : typeof tc.expectedOutput === "string"
+          ? tc.expectedOutput
+          : "";
+      const output = outputCandidate.trim();
+
+      if (!input || !output) return [];
+
+      return [{
+        input,
+        output,
+        isHidden: Boolean(tc.isHidden),
+      }];
+    });
+};
+
 export async function run(req: Request, res: Response) {
   return _judge(req, res, true);
 }
@@ -55,9 +85,7 @@ async function _judge(req: Request, res: Response, sampleOnly: boolean) {
     if (!video) return res.status(404).json({ error: "Video not found." });
     if (!video.codePane) return res.status(404).json({ error: "No coding problem attached to this video yet." });
 
-    const testcases = Array.isArray(video.codePane.testCases)
-      ? (video.codePane.testCases as TestCase[])
-      : [];
+    const testcases = normalizeJudgeTestCases(video.codePane.testCases);
     if (testcases.length === 0) {
       return res.status(400).json({ error: "No test cases defined for this problem yet." });
     }
@@ -116,12 +144,12 @@ export async function getSubmissions(req: Request, res: Response) {
   } else {
     const video = await prisma.video.findUnique({
       where: { id: videoId },
-      select: { codePaneId: true },
+      select: { problemId: true },
     })
     if (!video) return res.status(404).json({ error: "Video not found." });
 
     submissions = await prisma.submission.findMany({
-      where: { codePaneId: video.codePaneId, userId: userId ?? undefined },
+      where: { codePaneId: video.problemId, userId: userId ?? undefined },
       orderBy: { createdAt: "desc" },
       take: 50,
       select: {

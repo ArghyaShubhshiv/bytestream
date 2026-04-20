@@ -71,8 +71,8 @@ interface SubmissionResult {
 type ExecutionStatus = 'Pending' | 'Passed' | 'Failed'
 
 export default function CodePane({ problemTitle, problemDescription, videoId, testCaseCount = 0 }: CodePaneProps) {
-  const [language, setLanguage] = useState<Language>('python')
-  const [code, setCode] = useState<string>(DEFAULT_CODE.python)
+  const [language, setLanguage] = useState<Language>('cpp')
+  const [code, setCode] = useState<string>(DEFAULT_CODE.cpp)
   const [result, setResult] = useState<SubmissionResult | null>(null)
   const [status, setStatus] = useState<ExecutionStatus>('Pending')
   const [running, setRunning] = useState(false)

@@ -505,6 +505,7 @@ export default function FeedPage() {
                           problemTitle={activeVideo.codePane.problemTitle}
                           problemDescription={activeVideo.codePane.problemDescription}
                           videoId={activeVideo.id}
+                          testCaseCount={Array.isArray(activeVideo.codePane.testCases) ? activeVideo.codePane.testCases.length : 0}
                         />
                       </div>
                     </div>
