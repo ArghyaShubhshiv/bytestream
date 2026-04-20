@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const PISTON_URL = "https://emkc.org/api/v2/piston/execute";
+const PISTON_URL = process.env.PISTON_URL || "http://localhost:2000/api/v2/execute";
 
 const LANGUAGE_MAP: any = {
   cpp: { language: "cpp", version: "10.2.0" }, // ✅ FIXED
@@ -33,3 +33,5 @@ export async function runCode(
 
   return response.data.run;
 }
+
+export const SUPPORTED_LANGUAGES = LANGUAGE_MAP;

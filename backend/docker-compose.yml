@@ -11,5 +11,28 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  piston:
+    image: ghcr.io/engineer-man/piston:latest
+    ports:
+      - "2000:2000"
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - ./data/piston/packages:/piston/packages
+    tmpfs:
+      - /tmp:exec
+
+  piston-init:
+    image: curlimages/curl
+    depends_on:
+      - piston
+    command: >
+      sh -c '
+        while ! curl -s http://piston:2000/api/v2/packages > /dev/null; do sleep 2; done;
+        curl -X POST http://piston:2000/api/v2/packages -H "Content-Type: application/json" -d "{\"language\": \"python\", \"version\": \"3.10.0\"}";
+        curl -X POST http://piston:2000/api/v2/packages -H "Content-Type: application/json" -d "{\"language\": \"java\", \"version\": \"15.0.2\"}";
+        curl -X POST http://piston:2000/api/v2/packages -H "Content-Type: application/json" -d "{\"language\": \"cpp\", \"version\": \"10.2.0\"}";
+      '
+
 volumes:
   postgres_data:

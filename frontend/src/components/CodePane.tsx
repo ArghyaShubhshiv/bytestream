@@ -32,10 +32,9 @@ export default function CodePane({
   const [running, setRunning] = useState(false);
   const [stdin, setStdin] = useState("");
 
-  // ✅ FIXED: do NOT reset code on title/description change
   useEffect(() => {
     setCode(DEFAULT_CODE[language]);
-  }, [videoId]);
+  }, [videoId, language]);
 
   const handleRun = async () => {
     if (running || code.trim().length === 0) return;
@@ -44,7 +43,7 @@ export default function CodePane({
       setRunning(true);
       setOutput("Running...");
 
-      const res = await api.post("/submissions/run", {
+      const res = await api.post("/run", {
         code,
         language,
         videoId,
@@ -67,7 +66,7 @@ export default function CodePane({
       setRunning(true);
       setOutput("Submitting...");
 
-      const res = await api.post("/submissions/submit", {
+      const res = await api.post("/submit", {
         code,
         language,
         videoId,

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { judgeSubmission, TestCase } from "../modules/judge/judge.service.js";
 import { SUPPORTED_LANGUAGES } from "../modules/judge/piston.service.js";
-import { prisma } from "../lib/prisma.js";
+import prisma from "../lib/prisma.js";
 import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 
 // Per-session in-flight lock: prevents parallel submissions for the same video
@@ -16,7 +16,7 @@ export async function submit(req: Request, res: Response) {
 }
 
 async function _judge(req: Request, res: Response, sampleOnly: boolean) {
-  const { code, language, videoId } = req.body;
+  const { code, language, videoId, stdin } = req.body;
 
   // ── Input validation ────────────────────────────────────────────────────────
   if (!code || !language || videoId === undefined) {
@@ -40,7 +40,7 @@ async function _judge(req: Request, res: Response, sampleOnly: boolean) {
 
   // ── In-flight lock: one submission per video at a time per session ──────────
   const userId = (req as AuthenticatedRequest).internalUserId;
-  const clientId = userId ?? (req.ip || req.socket.remoteAddress || 'unknown');
+  const clientId = userId ?? (req.headers['x-forwarded-for'] as string || req.ip || req.socket.remoteAddress || Math.random().toString(36).substring(7));
   if (!clientId) return res.status(400).json({ error: "Unable to identify client." })
   const lockKey = `${clientId}:${parsedVideoId}`;
   if (inFlight.has(lockKey)) {
@@ -58,14 +58,14 @@ async function _judge(req: Request, res: Response, sampleOnly: boolean) {
     if (!video.codePane) return res.status(404).json({ error: "No coding problem attached to this video yet." });
 
     const testcases = Array.isArray(video.codePane.testCases)
-      ? (video.codePane.testCases as TestCase[])
+      ? (video.codePane.testCases as unknown as TestCase[])
       : [];
     if (testcases.length === 0) {
       return res.status(400).json({ error: "No test cases defined for this problem yet." });
     }
 
     // ── Judge ───────────────────────────────────────────────────────────────────
-    const result = await judgeSubmission(testcases, code, language, sampleOnly);
+    const result = await judgeSubmission(testcases, code, language, sampleOnly, stdin);
 
     // ── Persist (only for full submit, not sample runs) ─────────────────────────
     if (!sampleOnly) {
@@ -79,7 +79,7 @@ async function _judge(req: Request, res: Response, sampleOnly: boolean) {
             status: result.status,
             passedCount: result.passedCount,
             totalCount: result.totalCount,
-            executionTimeMs: result.executionTimeMs ?? null,
+            executionTimeMs: (result as any).executionTimeMs ?? null,
             error: result.error ?? null,
           },
         });
