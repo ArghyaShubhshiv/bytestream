@@ -4,6 +4,7 @@ import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { prisma } from "../lib/prisma.js";
 import { s3Client } from "../lib/s3Client.js";
+import { cacheVideo, getCachedVideo, cacheFeed, getCachedFeed } from "../lib/redis.js";
 
 interface RawTestCase {
   input?: unknown;
@@ -66,6 +67,12 @@ const getPlayableVideoUrl = async (videoUrl: string | null): Promise<string | nu
 
 export const getVideoFeed = async (_req: Request, res: Response) => {
   try {
+    // Try to get from Redis cache first
+    const cachedFeed = await getCachedFeed();
+    if (cachedFeed) {
+      return res.json(cachedFeed);
+    }
+
     const videos = await prisma.video.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
@@ -84,6 +91,9 @@ export const getVideoFeed = async (_req: Request, res: Response) => {
         videoUrl: await getPlayableVideoUrl(video.videoUrl),
       })),
     );
+
+    // Cache the feed for future requests
+    await cacheFeed(playableVideos);
 
     res.json(playableVideos);
   } catch (err) {
@@ -238,6 +248,12 @@ export const getVideoById = async (req: Request, res: Response) => {
   }
 
   try {
+    // Try to get from Redis cache first
+    const cachedVideo = await getCachedVideo(videoId);
+    if (cachedVideo) {
+      return res.json(cachedVideo);
+    }
+
     const video = await prisma.video.findUnique({
       where: { id: videoId },
       include: {
@@ -251,12 +267,17 @@ export const getVideoById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Video not found." })
     }
 
-    return res.json({
+    const videoData = {
       ...video,
       likeCount: video._count.videoLikes,
       dislikeCount: video._count.videoDislikes,
       videoUrl: await getPlayableVideoUrl(video.videoUrl),
-    })
+    }
+
+    // Cache the video for future requests
+    await cacheVideo(videoId, videoData);
+
+    return res.json(videoData)
   } catch (err) {
     console.error("Error fetching video by ID:", err)
     return res.status(500).json({ error: "Failed to fetch video details" })

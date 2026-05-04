@@ -96,7 +96,7 @@ export default function CodePane({ problemTitle, problemDescription, videoId, te
     setStatus('Pending')
 
     try {
-      const res = await api.post<SubmissionResult>('/execute', {
+      const res = await api.post<SubmissionResult>('/submit', {
         code,
         language: LANGUAGE_KEY[language],
         videoId,

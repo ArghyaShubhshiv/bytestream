@@ -9,6 +9,8 @@ import interactionRoutes from "./routes/interaction.routes.js";
 import watchLaterRoutes from "./routes/watchlater.routes.js";
 import submissionRoutes from "./routes/submission.routes.js";
 import { checkPistonHealth } from "./modules/judge/health.check.js";
+import { initializeRedis, preloadVideos } from "./lib/redis.js";
+import { prisma } from "./lib/prisma.js";
 
 const app = express();
 
@@ -63,8 +65,28 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 ByteStream API running on http://localhost:${PORT}`);
+  
+  // Initialize Redis
+  await initializeRedis();
+  
+  // Preload recent videos on startup
+  try {
+    const recentVideos = await prisma.video.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+    
+    if (recentVideos.length > 0) {
+      const videoIds = recentVideos.map(v => v.id);
+      await preloadVideos(videoIds);
+    }
+  } catch (err) {
+    console.warn("Failed to preload videos:", err instanceof Error ? err.message : err);
+  }
+  
   // Check Piston in background — don't block server start
   checkPistonHealth().catch(console.error);
 });

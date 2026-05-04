@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { Search, Clock3, ThumbsUp, ThumbsDown, Bookmark, Sparkles, SkipBack, SkipForward } from 'lucide-react'
 import { useAuth } from '../App'
 import { api } from '../../lib/api'
+import { getCachedVideoFeed } from '../hooks/usePreloadVideos'
 import { type Video } from '../components/VideoDisplay'
 import CodePane from '../components/CodePane'
 import { addWatchedVideo, getWatchedHistory, getWatchLater, toggleWatchLater, WatchedVideo } from '../lib/videoStorage'
@@ -51,9 +52,34 @@ export default function FeedPage() {
     }
 
     const loadFeed = async (query?: string) => {
-      setLoading(true)
       setError('')
       try {
+        // Check for cached data first (only for default feed, not searches)
+        if (!query?.trim()) {
+          const cached = getCachedVideoFeed()
+          if (cached && Array.isArray(cached)) {
+            // Use cached data immediately
+            setVideos(cached)
+            if (cached.length > 0) {
+              setActiveVideo(cached[0])
+            }
+            setLoading(false)
+            // Refresh in background
+            try {
+              const res = await api.get('/videos/feed')
+              const feedVideos = Array.isArray(res.data) ? res.data : []
+              if (feedVideos.length > 0) {
+                setVideos(feedVideos)
+              }
+            } catch (err) {
+              // Silently fail - we already have cached data
+            }
+            return
+          }
+        }
+
+        // No cache or searching - fetch from API
+        setLoading(true)
         const endpoint = query?.trim() ? '/videos/search' : '/videos/feed'
         const res = await api.get(endpoint, {
           params: query?.trim() ? { query: query.trim() } : undefined,

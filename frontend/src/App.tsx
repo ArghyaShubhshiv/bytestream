@@ -5,6 +5,7 @@ import {
   createRoute,
 } from '@tanstack/react-router'
 import { useState, createContext, useContext } from 'react'
+import { usePreloadVideos } from './hooks/usePreloadVideos'
 import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import CreatorUploadPage from './pages/CreatorUploadPage'
@@ -39,6 +40,9 @@ export function useAuth() {
 }
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Preload videos on app startup
+  usePreloadVideos()
+
   const [user, setUser] = useState<AuthUser | null>(() => {
     const stored = localStorage.getItem('bytestream_user')
     return stored ? JSON.parse(stored) : null
