@@ -8,7 +8,7 @@ import userRoutes from "./routes/user.routes.js";
 import interactionRoutes from "./routes/interaction.routes.js";
 import watchLaterRoutes from "./routes/watchlater.routes.js";
 import submissionRoutes from "./routes/submission.routes.js";
-import { checkPistonHealth } from "./modules/judge/health.check.js";
+import { assertCodeEngineReady, checkPistonHealth } from "./modules/judge/health.check.js";
 
 const app = express();
 
@@ -63,10 +63,29 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 ByteStream API running on http://localhost:${PORT}`);
-  // Check Piston in background — don't block server start
-  checkPistonHealth().catch((err) => {
-    console.error("[health-check] Failed:", err instanceof Error ? err.message : String(err))
+const STRICT_ENGINE_STARTUP = process.env.STRICT_ENGINE_STARTUP !== "false";
+
+async function bootstrap() {
+  if (STRICT_ENGINE_STARTUP) {
+    try {
+      await assertCodeEngineReady();
+      console.log("✅ Code engine is ready.");
+    } catch (err) {
+      console.error(
+        "❌ Code engine startup check failed:",
+        err instanceof Error ? err.message : String(err)
+      );
+      process.exit(1);
+    }
+  } else {
+    checkPistonHealth().catch((err) => {
+      console.error("[health-check] Failed:", err instanceof Error ? err.message : String(err));
+    });
+  }
+
+  app.listen(PORT, () => {
+    console.log(`🚀 ByteStream API running on http://localhost:${PORT}`);
   });
-});
+}
+
+bootstrap();

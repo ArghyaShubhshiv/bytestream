@@ -1,5 +1,5 @@
-import { judgeSubmission } from "../judge/judge.service";
-import prisma from "../../prisma";
+import { judgeSubmission } from "../judge/judge.service.js";
+import prisma from "../../lib/prisma.js";
 
 const SUPPORTED_LANGUAGES = ["cpp", "python", "java"];
 
@@ -22,7 +22,7 @@ export const runCodeHandler = async (req: any, res: any) => {
 
     const video = await prisma.video.findUnique({
       where: { id: vid },
-      include: { codePane: { include: { testCases: true } } },
+      include: { codePane: true },
     });
 
     if (!video || !video.codePane) {
@@ -30,10 +30,11 @@ export const runCodeHandler = async (req: any, res: any) => {
     }
 
     const result = await judgeSubmission(
-      video.codePane.testCases,
+      Array.isArray(video.codePane.testCases) ? video.codePane.testCases : [],
       code,
       language,
-      sampleOnly ?? true
+      sampleOnly ?? true,
+      stdin
     );
 
     return res.json(result);

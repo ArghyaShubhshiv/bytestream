@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useAuth } from '../App'
-import { api } from '../../lib/api'
+import { useAuth } from '../auth'
+import { api } from '../lib/api'
 
 interface HistoryItem {
   id: number

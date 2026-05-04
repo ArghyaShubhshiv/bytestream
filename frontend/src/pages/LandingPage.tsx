@@ -1,7 +1,7 @@
 import HeroSection from '../components/landing/HeroSection'
 import TopicsSection from '../components/landing/TopicsSection'
 import { Link } from '@tanstack/react-router'
-import { useAuth } from '../App'
+import { useAuth } from '../auth'
 
 export default function LandingPage() {
   const { user, logout } = useAuth()

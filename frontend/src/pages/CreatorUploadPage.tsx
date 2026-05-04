@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { useAuth } from '../App'
-import { api } from '../../lib/api'
+import { useAuth } from '../auth'
+import { api } from '../lib/api'
 
 interface TestCase {
   input: string

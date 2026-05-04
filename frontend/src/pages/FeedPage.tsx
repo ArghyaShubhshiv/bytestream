@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Search, Clock3, ThumbsUp, ThumbsDown, Bookmark, Sparkles, SkipBack, SkipForward } from 'lucide-react'
-import { useAuth } from '../App'
-import { api } from '../../lib/api'
+import { useAuth } from '../auth'
+import { api } from '../lib/api'
 import { type Video } from '../components/VideoDisplay'
 import CodePane from '../components/CodePane'
 import { addWatchedVideo, getWatchedHistory, getWatchLater, toggleWatchLater, WatchedVideo } from '../lib/videoStorage'
@@ -71,9 +71,11 @@ export default function FeedPage() {
         })
         const feedVideos = Array.isArray(res.data) ? res.data : []
         setVideos(feedVideos)
-        if (feedVideos.length > 0 && !feedVideos.some((video) => video.id === activeVideo?.id)) {
-          setActiveVideo(feedVideos[0])
-        }
+        setActiveVideo((current) =>
+          current && feedVideos.some((video) => video.id === current.id)
+            ? current
+            : feedVideos[0] ?? null,
+        )
       } catch (err) {
         setError('Unable to load the video feed. Please try again later.')
       } finally {
@@ -83,27 +85,6 @@ export default function FeedPage() {
 
     loadFeed(debouncedSearch)
   }, [navigate, debouncedSearch, user])
-
-  useEffect(() => {
-    if (!activeVideo) return
-    const newHistory = addWatchedVideo({
-      id: activeVideo.id,
-      videoTitle: activeVideo.videoTitle,
-      creator: activeVideo.creator.username,
-      watchedAt: new Date().toISOString(),
-    })
-    setHistory(newHistory)
-    if (user) {
-      fetchWatchLater()
-    } else {
-      setWatchLaterIds(getWatchLater())
-    }
-    fetchComments(activeVideo.id)
-    // BUG FIX: sync liked/disliked when the active video changes (e.g. on initial feed load
-    // the first video is auto-selected and its server-side reaction state must be applied).
-    setLiked(activeVideo.likedByUser ?? false)
-    setDisliked(activeVideo.dislikedByUser ?? false)
-  }, [activeVideo, user])
 
   const activeIsWatchLater = activeVideo ? watchLaterIds.includes(activeVideo.id) : false
   const activeLikeCount = activeVideo ? activeVideo.likeCount ?? activeVideo._count?.videoLikes ?? 0 : 0
@@ -142,7 +123,7 @@ export default function FeedPage() {
     })
   }
 
-  const fetchComments = async (videoId: number) => {
+  const fetchComments = useCallback(async (videoId: number) => {
     setCommentsLoading(true)
     try {
       const res = await api.get(`/interactions/videos/${videoId}`)
@@ -152,9 +133,9 @@ export default function FeedPage() {
     } finally {
       setCommentsLoading(false)
     }
-  }
+  }, [])
 
-  const fetchWatchLater = async () => {
+  const fetchWatchLater = useCallback(async () => {
     if (!user) return
     try {
       const res = await api.get('/watchlater')
@@ -162,7 +143,26 @@ export default function FeedPage() {
     } catch {
       setWatchLaterIds(getWatchLater())
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (!activeVideo) return
+    const newHistory = addWatchedVideo({
+      id: activeVideo.id,
+      videoTitle: activeVideo.videoTitle,
+      creator: activeVideo.creator.username,
+      watchedAt: new Date().toISOString(),
+    })
+    setHistory(newHistory)
+    if (user) {
+      fetchWatchLater()
+    } else {
+      setWatchLaterIds(getWatchLater())
+    }
+    fetchComments(activeVideo.id)
+    setLiked(activeVideo.likedByUser ?? false)
+    setDisliked(activeVideo.dislikedByUser ?? false)
+  }, [activeVideo, fetchComments, fetchWatchLater, user])
 
   const handleVideoSelect = (video: Video) => {
     setActiveVideo(video)

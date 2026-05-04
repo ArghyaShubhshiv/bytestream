@@ -1,6 +1,10 @@
 import { runCode } from "./piston.service";
 
-export interface TestCase { input: string; output: string; }
+export interface TestCase {
+  input: string;
+  output?: string;
+  expectedOutput?: string;
+}
 
 export async function judgeSubmission(
   testCases: any[],
@@ -83,7 +87,7 @@ export async function judgeSubmission(
       };
     }
 
-    const expected = tc.output.trim();
+    const expected = (tc.output ?? tc.expectedOutput ?? "").trim();
     const actual = (result.stdout || "").trim();
 
     if (expected !== actual) {

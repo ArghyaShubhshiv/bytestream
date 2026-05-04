@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from '@tanstack/react-router'
-import { useAuth } from '../App'
+import { useAuth } from '../auth'
 import { api } from '../lib/api'
 
 type Mode = 'login' | 'register'

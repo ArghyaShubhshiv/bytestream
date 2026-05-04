@@ -1,6 +1,6 @@
 import { Play, Code2, Zap } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
-import { useAuth } from '../../App'
+import { useAuth } from '../../auth'
 
 export default function HeroSection() {
   const { user } = useAuth()

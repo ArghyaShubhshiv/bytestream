@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from '@tanstack/react-router'
-import { api } from '../../lib/api'
+import { api } from '../lib/api'
 import CodePane from '../components/CodePane'
 
 interface Video {
