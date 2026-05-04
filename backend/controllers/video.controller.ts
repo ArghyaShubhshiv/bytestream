@@ -5,6 +5,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { prisma } from "../lib/prisma.js";
 import { s3Client } from "../lib/s3Client.js";
 import { cacheVideo, getCachedVideo, cacheFeed, getCachedFeed } from "../lib/redis.js";
+import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 
 interface RawTestCase {
   input?: unknown;
@@ -238,6 +239,45 @@ export const confirmUpload = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Failed to confirm upload:", error);
     return res.status(500).json({ error: "Failed to create video record" });
+  }
+};
+
+export const deleteVideo = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.internalUserId!;
+  const videoId = Number(req.params.videoId);
+
+  if (Number.isNaN(videoId)) {
+    return res.status(400).json({ error: "Invalid video ID." });
+  }
+
+  try {
+    const video = await prisma.video.findUnique({
+      where: { id: videoId },
+      select: { id: true, creatorId: true },
+    });
+
+    if (!video) {
+      return res.status(404).json({ error: "Video not found." });
+    }
+
+    if (video.creatorId !== userId) {
+      return res.status(403).json({ error: "Not allowed to delete this video." });
+    }
+
+    await prisma.$transaction([
+      prisma.commentLikes.deleteMany({ where: { comment: { videoId } } }),
+      prisma.commentDislikes.deleteMany({ where: { comment: { videoId } } }),
+      prisma.comment.deleteMany({ where: { videoId } }),
+      prisma.videoLikes.deleteMany({ where: { videoId } }),
+      prisma.videoDislikes.deleteMany({ where: { videoId } }),
+      prisma.watchLater.deleteMany({ where: { videoId } }),
+      prisma.video.delete({ where: { id: videoId } }),
+    ]);
+
+    return res.status(200).json({ deleted: true, videoId });
+  } catch (error) {
+    console.error("Failed to delete video:", error);
+    return res.status(500).json({ error: "Failed to delete video" });
   }
 };
 

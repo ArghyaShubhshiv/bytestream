@@ -47,6 +47,11 @@ app.get("/api/health", async (_req: Request, res: Response) => {
   res.status(200).json({ status: "ByteStream API live and working." });
 });
 
+// Root route (helps avoid "Cannot GET /")
+app.get("/", (_req: Request, res: Response) => {
+  res.status(200).send("ByteStream API is running. Try /api/health");
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/videos", videoRoutes);

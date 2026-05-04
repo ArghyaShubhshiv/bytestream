@@ -35,6 +35,12 @@ export default function Navbar() {
               >
                 Open Feed
               </Link>
+              <Link
+                to="/dashboard"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {user.username.slice(0, 2).toUpperCase()}
+              </Link>
               <button
                 onClick={logout}
                 className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
