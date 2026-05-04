@@ -13,6 +13,7 @@ import FeedPage from './pages/FeedPage'
 import VideoDetailPage from './pages/VideoDetailPage'
 import SubmissionHistoryPage from './pages/SubmissionHistoryPage'
 import UserProfilePage from './pages/UserProfilePage'
+import DashboardPage from './pages/DashboardPage'
 
 // ─── Auth Context ────────────────────────────────────────────────────────────
 
@@ -128,6 +129,12 @@ const submissionsRoute = createRoute({
   component: SubmissionHistoryPage,
 })
 
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+  component: DashboardPage,
+})
+
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/profile/$username',
@@ -142,6 +149,7 @@ const routeTree = rootRoute.addChildren([
   videoDetailRoute,
   submissionsRoute,
   profileRoute,
+  dashboardRoute,
 ])
 
 const router = createRouter({ routeTree })
