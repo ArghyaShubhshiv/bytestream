@@ -31,6 +31,7 @@ const localRuntimeByLanguage: Record<string, { command: string; extension: strin
   python: { command: "python3", extension: "py" },
   javascript: { command: "node", extension: "js" },
   cpp: { command: "g++", extension: "cpp", compile: "g++" },
+  java: {command: "java", extension: "java"},
 };
 
 async function runLocalFallback(language: string, code: string, stdin: string): Promise<RunResult | null> {
@@ -204,7 +205,7 @@ export async function runCode(
     language: runtime.pistonName,
     files: [{ content: code }],
     stdin,
-    run_timeout: 5000,
+    run_timeout: 3000,
     compile_timeout: 10000,
     run_memory_limit: 134217728,
   };
@@ -214,7 +215,7 @@ export async function runCode(
   for (const withPinnedVersion of [true, false]) {
     const payload = withPinnedVersion
       ? { ...basePayload, version: runtime.version }
-      : basePayload;
+      : { ...basePayload,version: "*"};
 
     let response: Response;
     try {

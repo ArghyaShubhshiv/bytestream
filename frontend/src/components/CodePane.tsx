@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Editor from '@monaco-editor/react'
 import { api } from '../../lib/api'
 
 interface CodePaneProps {
@@ -88,7 +89,7 @@ export default function CodePane({ problemTitle, problemDescription, videoId, te
     setCode(DEFAULT_CODE[language])
     setResult(null)
     setStatus('Pending')
-  }, [videoId, problemTitle, problemDescription])
+  }, [videoId, problemTitle, problemDescription, language])
 
   const execute = async () => {
     setRunning(true)
@@ -154,13 +155,28 @@ export default function CodePane({ problemTitle, problemDescription, videoId, te
         </div>
       )}
 
+      {/* Replaced textarea with Monaco Editor wrapped in a styled container */}
       <div className="flex-1 px-4 py-3 min-h-0">
-        <textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          className="h-full w-full resize-none rounded-xl border border-[#3a3a3a] bg-[#161616] p-4 font-mono text-sm leading-6 text-[#d4d4d4] focus:outline-none focus:ring-2 focus:ring-[#0e639c]"
-          spellCheck={false}
-        />
+        <div className="h-full w-full overflow-hidden rounded-xl border border-[#3a3a3a] bg-[#1e1e1e] focus-within:border-[#0e639c] focus-within:ring-1 focus-within:ring-[#0e639c] transition-shadow">
+          <Editor
+            height="100%"
+            language={language}
+            theme="vs-dark"
+            value={code}
+            onChange={(val) => setCode(val || '')}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              lineHeight: 24,
+              padding: { top: 16, bottom: 16 },
+              scrollBeyondLastLine: false,
+              wordWrap: 'on',
+              fontFamily: '"Fira Code", "JetBrains Mono", monospace',
+              renderLineHighlight: 'all',
+              roundedSelection: true,
+            }}
+          />
+        </div>
       </div>
 
       {isLoading && (

@@ -50,6 +50,7 @@ export default function VideoDisplay({ videos, selectedVideoId, onVideoChange }:
               {video.videoUrl ? (
                 <video
                   src={video.videoUrl}
+                  autoPlay
                   muted
                   loop
                   playsInline
