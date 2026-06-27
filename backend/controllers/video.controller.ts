@@ -4,7 +4,7 @@ import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { prisma } from "../lib/prisma.js";
 import { s3Client } from "../lib/s3Client.js";
-import { cacheVideo, getCachedVideo, cacheFeed, getCachedFeed } from "../lib/redis.js";
+import { cacheVideo, getCachedVideo, cacheFeed, getCachedFeed, clearFeedCache } from "../lib/redis.js";
 import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 
 interface RawTestCase {
@@ -202,7 +202,10 @@ export const confirmUpload = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "authorId must be a valid number" });
   }
 
-  const videoUrl = `https://${bucketName}.s3.amazonaws.com/${fileKey}`;
+  const region = process.env.AWS_REGION;
+  const videoUrl = region && region !== "us-east-1"
+    ? `https://${bucketName}.s3.${region}.amazonaws.com/${fileKey}`
+    : `https://${bucketName}.s3.amazonaws.com/${fileKey}`;
   const normalizedProblemTitle = (problemTitle ?? title).trim();
   const normalizedTestCases = normalizeTestCases(testCases);
 
@@ -234,6 +237,9 @@ export const confirmUpload = async (req: Request, res: Response) => {
         codePane: true,
       },
     });
+
+    // Bust the cached feed so the new video appears immediately.
+    await clearFeedCache();
 
     return res.status(201).json(createdVideo);
   } catch (error) {
@@ -273,6 +279,9 @@ export const deleteVideo = async (req: AuthenticatedRequest, res: Response) => {
       prisma.watchLater.deleteMany({ where: { videoId } }),
       prisma.video.delete({ where: { id: videoId } }),
     ]);
+
+    // Bust the cached feed so the deleted video disappears immediately.
+    await clearFeedCache();
 
     return res.status(200).json({ deleted: true, videoId });
   } catch (error) {

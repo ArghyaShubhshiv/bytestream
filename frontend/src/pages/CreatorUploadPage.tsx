@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../App'
 import { api } from '../../lib/api'
+import { clearVideoFeedCache } from '../hooks/usePreloadVideos'
 
 interface TestCase {
   input: string
@@ -115,7 +116,13 @@ export default function CreatorUploadPage() {
           }
         })
 
-        xhr.addEventListener('load', resolve)
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(null)
+          } else {
+            reject(new Error(`Upload failed (status ${xhr.status}). Check S3 bucket permissions/CORS.`))
+          }
+        })
         xhr.addEventListener('error', () => reject(new Error('Upload failed')))
         xhr.addEventListener('abort', () => reject(new Error('Upload aborted')))
 
@@ -135,6 +142,9 @@ export default function CreatorUploadPage() {
       })
 
       setSuccess(true)
+
+      // Clear the cached feed so the freshly uploaded video shows up right away.
+      clearVideoFeedCache()
 
       // Redirect to feed after 2 seconds
       setTimeout(() => {

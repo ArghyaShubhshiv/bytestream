@@ -101,6 +101,16 @@ export const getCachedFeed = async (): Promise<unknown | null> => {
   }
 };
 
+// Invalidate the cached feed so a freshly uploaded/deleted video shows up
+// immediately instead of waiting for the TTL to expire.
+export const clearFeedCache = async (): Promise<void> => {
+  try {
+    cache.delete('feed:latest');
+  } catch (err) {
+    console.warn('Error clearing feed cache:', err instanceof Error ? err.message : err);
+  }
+};
+
 export const preloadVideos = async (videoIds: number[]): Promise<void> => {
   try {
     cachedVideoIds = videoIds.slice(0, MAX_CACHED_VIDEOS);
