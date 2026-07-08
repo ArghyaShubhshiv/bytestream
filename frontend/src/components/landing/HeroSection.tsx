@@ -1,6 +1,8 @@
 import { Play, Code2, Zap } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useAuth } from '../../App'
+import videoPreview from '/src/assets/video-preview.jpg'
+import idePreview from '/src/assets/ide-preview.jpg'
 
 export default function HeroSection() {
   const { user } = useAuth()
@@ -57,7 +59,7 @@ export default function HeroSection() {
               Video Tutorial
             </div>
             <img 
-              src="/src/assets/video-preview.jpg" 
+              src={videoPreview}
               alt="Video Tutorial Preview"
               className="h-80 w-full rounded-3xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
             />
@@ -69,7 +71,7 @@ export default function HeroSection() {
               Live IDE
             </div>
             <img 
-              src="/src/assets/ide-preview.jpg" 
+              src={idePreview}
               alt="IDE Workspace Preview"
               className="h-80 w-full rounded-3xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
             />
