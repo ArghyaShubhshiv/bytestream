@@ -1,0 +1,86 @@
+# docker-compose.prod.yml  (repo root)
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  piston:
+    image: ghcr.io/engineer-man/piston
+    restart: unless-stopped
+    privileged: true            # required — Piston sandboxes code in nested containers
+    # Bound to localhost only, so runtime installs are reachable from the
+    # droplet host but Piston is NOT exposed to the public internet.
+    ports:
+      - "127.0.0.1:2000:2000"
+    tmpfs:
+      - /piston/jobs
+    volumes:
+      - piston_packages:/piston/packages   # installed language runtimes survive restarts
+
+  backend:
+    build: ./backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_URL: redis://redis:6379
+      PISTON_URL: http://piston:2000
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: https://${DOMAIN}
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      PORT: "3001"
+      NODE_ENV: production
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  redis_data:
+  piston_packages:
+  caddy_data:
+  caddy_config:
