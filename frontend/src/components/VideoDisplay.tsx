@@ -5,6 +5,8 @@ export interface Video {
   creator: { username: string }
   likeCount?: number
   dislikeCount?: number
+  likedByUser?: boolean      // ← add
+  dislikedByUser?: boolean   // ← add
   _count?: {
     videoLikes?: number
     videoDislikes?: number
@@ -50,6 +52,7 @@ export default function VideoDisplay({ videos, selectedVideoId, onVideoChange }:
               {video.videoUrl ? (
                 <video
                   src={video.videoUrl}
+                  autoPlay
                   muted
                   loop
                   playsInline

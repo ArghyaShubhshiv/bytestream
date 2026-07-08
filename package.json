@@ -19,6 +19,8 @@
     "concurrently": "^9.1.0"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.7.0"
+    "@monaco-editor/react": "^4.7.0",
+    "retry": "^0.13.1",
+    "tsx": "^4.21.0"
   }
 }

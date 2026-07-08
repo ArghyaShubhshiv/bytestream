@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+import { clearFeedCache } from "../lib/redis.js";
 
 export const toggleVideoLike = async (req: AuthenticatedRequest, res: Response) => {
   const videoId = parseInt(req.params.videoId as string, 10);
@@ -15,6 +16,7 @@ export const toggleVideoLike = async (req: AuthenticatedRequest, res: Response) 
       await prisma.videoLikes.delete({
         where: { videoId_userId: { videoId, userId } },
       });
+      await clearFeedCache();
       const [likes, dislikes] = await Promise.all([
         prisma.videoLikes.count({ where: { videoId } }),
         prisma.videoDislikes.count({ where: { videoId } }),
@@ -23,6 +25,7 @@ export const toggleVideoLike = async (req: AuthenticatedRequest, res: Response) 
     } else {
       const dislikeRemoval = await prisma.videoDislikes.deleteMany({ where: { videoId, userId } });
       await prisma.videoLikes.create({ data: { videoId, userId } });
+      await clearFeedCache();
       const [likes, dislikes] = await Promise.all([
         prisma.videoLikes.count({ where: { videoId } }),
         prisma.videoDislikes.count({ where: { videoId } }),
@@ -48,6 +51,7 @@ export const toggleVideoDislike = async (req: AuthenticatedRequest, res: Respons
       await prisma.videoDislikes.delete({
         where: { videoId_userId: { videoId, userId } },
       });
+      await clearFeedCache();
       const [likes, dislikes] = await Promise.all([
         prisma.videoLikes.count({ where: { videoId } }),
         prisma.videoDislikes.count({ where: { videoId } }),
@@ -56,6 +60,7 @@ export const toggleVideoDislike = async (req: AuthenticatedRequest, res: Respons
     } else {
       const likeRemoval = await prisma.videoLikes.deleteMany({ where: { videoId, userId } });
       await prisma.videoDislikes.create({ data: { videoId, userId } });
+      await clearFeedCache();
       const [likes, dislikes] = await Promise.all([
         prisma.videoLikes.count({ where: { videoId } }),
         prisma.videoDislikes.count({ where: { videoId } }),

@@ -29,7 +29,9 @@ install_runtime() {
 }
 
 install_runtime "python"     "3.10.0"
-install_runtime "javascript" "18.15.0"
+# NOTE: the JavaScript package is published under the name "node" in Piston's
+# package index (not "javascript"). It still registers as the "javascript" runtime.
+install_runtime "node"       "18.15.0"
 install_runtime "java"       "15.0.2"
 install_runtime "c++"        "10.2.0"
 

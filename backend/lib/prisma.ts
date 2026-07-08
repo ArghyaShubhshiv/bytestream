@@ -4,7 +4,7 @@ import { PrismaClient } from "../generated/prisma/client.js";
 
 const connectionString =
 	process.env.DATABASE_URL ??
-	"postgresql://admin:password123@localhost:5433/bytestream?schema=public";
+	"postgresql://admin:password123@localhost:5434/bytestream?schema=public";
 
 const adapter = new PrismaPg({ connectionString });
 export const prisma = new PrismaClient({ adapter });

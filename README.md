@@ -34,7 +34,7 @@ npm run install:all
 Create `backend/.env` (copy from `backend/.env.example`):
 
 ```env
-DATABASE_URL=postgresql://admin:password123@localhost:5433/bytestream?schema=public
+DATABASE_URL=postgresql://admin:password123@localhost:5434/bytestream?schema=public
 
 # Auth
 JWT_SECRET=your_super_secret_jwt_key_here

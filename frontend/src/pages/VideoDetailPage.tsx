@@ -131,12 +131,15 @@ export default function VideoDetailPage() {
 
           <div className="glass-card rounded-3xl border border-border bg-secondary/40 p-6">
             <h2 className="text-xl font-semibold text-foreground mb-3">Interactive Coding</h2>
-            <CodePane
-              problemTitle={video.codePane.problemTitle}
-              problemDescription={video.codePane.problemDescription}
-              videoId={video.id}
-              testCaseCount={Array.isArray(video.codePane.testCases) ? video.codePane.testCases.length : 0}
-            />
+            {/* Monaco uses height:100%, so it needs an ancestor with a fixed height */}
+            <div className="h-[680px] overflow-hidden rounded-2xl border border-border">
+              <CodePane
+                problemTitle={video.codePane.problemTitle}
+                problemDescription={video.codePane.problemDescription}
+                videoId={video.id}
+                testCaseCount={Array.isArray(video.codePane.testCases) ? video.codePane.testCases.length : 0}
+              />
+            </div>
           </div>
         </div>
       </div>

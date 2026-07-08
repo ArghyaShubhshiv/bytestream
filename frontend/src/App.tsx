@@ -5,6 +5,7 @@ import {
   createRoute,
 } from '@tanstack/react-router'
 import { useState, createContext, useContext } from 'react'
+import { usePreloadVideos } from './hooks/usePreloadVideos'
 import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import CreatorUploadPage from './pages/CreatorUploadPage'
@@ -12,6 +13,7 @@ import FeedPage from './pages/FeedPage'
 import VideoDetailPage from './pages/VideoDetailPage'
 import SubmissionHistoryPage from './pages/SubmissionHistoryPage'
 import UserProfilePage from './pages/UserProfilePage'
+import DashboardPage from './pages/DashboardPage'
 
 // ─── Auth Context ────────────────────────────────────────────────────────────
 
@@ -39,6 +41,9 @@ export function useAuth() {
 }
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Preload videos on app startup
+  usePreloadVideos()
+
   const [user, setUser] = useState<AuthUser | null>(() => {
     const stored = localStorage.getItem('bytestream_user')
     return stored ? JSON.parse(stored) : null
@@ -124,6 +129,12 @@ const submissionsRoute = createRoute({
   component: SubmissionHistoryPage,
 })
 
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+  component: DashboardPage,
+})
+
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/profile/$username',
@@ -138,6 +149,7 @@ const routeTree = rootRoute.addChildren([
   videoDetailRoute,
   submissionsRoute,
   profileRoute,
+  dashboardRoute,
 ])
 
 const router = createRouter({ routeTree })

@@ -10,7 +10,10 @@ export const getComments = async (req: AuthenticatedRequest, res: Response) => {
     const comments = await prisma.comment.findMany({
       where: { videoId },
       orderBy: { createdAt: "desc" },
-      include: { user: { select: { username: true } } },
+      include: {
+        user: { select: { username: true } },
+        _count: { select: { commentLikes: true, commentDislikes: true } },
+      },
     });
 
     if (!userId) {
